@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, DollarSign, Calendar } from "lucide-react";
+import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank } from "lucide-react";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
 
@@ -47,6 +46,8 @@ const Dashboard = () => {
   const totalBudget = categories.reduce((sum, cat) => sum + cat.budgetAmount, 0);
   const totalSpent = categories.reduce((sum, cat) => sum + cat.spent, 0);
   const remainingBudget = monthlyIncome - totalBudget;
+  const actualRemaining = monthlyIncome - totalSpent;
+  const budgetUtilization = monthlyIncome > 0 ? (totalBudget / monthlyIncome) * 100 : 0;
 
   if (!incomeSet) {
     return (
@@ -107,12 +108,89 @@ const Dashboard = () => {
       </header>
 
       <div className="max-w-6xl mx-auto p-4">
-        {/* Budget Overview */}
+        {/* Budget Allocation Overview */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Budget Allocation Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Income Breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Monthly Income</p>
+                  <p className="text-2xl font-bold text-green-600">${monthlyIncome.toLocaleString()}</p>
+                </div>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Total Budgeted</p>
+                  <p className="text-2xl font-bold text-blue-600">${totalBudget.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">{budgetUtilization.toFixed(1)}% of income</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">Available for Savings</p>
+                  <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                    ${remainingBudget.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {monthlyIncome > 0 ? ((remainingBudget / monthlyIncome) * 100).toFixed(1) : 0}% of income
+                  </p>
+                </div>
+              </div>
+
+              {/* Visual Budget Allocation */}
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Budget Allocation</span>
+                  <span>{budgetUtilization.toFixed(1)}% allocated</span>
+                </div>
+                <Progress value={Math.min(budgetUtilization, 100)} className="h-3 mb-2" />
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Budgeted: ${totalBudget.toLocaleString()}</span>
+                  <span>Income: ${monthlyIncome.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Savings Potential Alert */}
+              {remainingBudget > 0 && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <PiggyBank className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium text-green-800">
+                      Great! You have ${remainingBudget.toLocaleString()} available for savings or investments
+                    </p>
+                    <p className="text-xs text-green-600">
+                      That's {((remainingBudget / monthlyIncome) * 100).toFixed(1)}% of your income you can save!
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {remainingBudget < 0 && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-red-600" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">
+                      Warning: You're budgeting ${Math.abs(remainingBudget).toLocaleString()} more than your income
+                    </p>
+                    <p className="text-xs text-red-600">
+                      Consider reducing some budget categories to avoid overspending
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Progress Overview */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="w-5 h-5" />
-              Budget Overview
+              Monthly Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -131,8 +209,8 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Remaining</p>
-                <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ${(monthlyIncome - totalSpent).toLocaleString()}
+                <p className={`text-2xl font-bold ${actualRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ${actualRemaining.toLocaleString()}
                 </p>
               </div>
             </div>
