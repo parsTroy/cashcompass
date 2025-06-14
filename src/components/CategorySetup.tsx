@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,28 +102,28 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-2xl mx-auto">
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Set Up Your Budget Categories</CardTitle>
-            <p className="text-center text-gray-600">
+            <CardTitle className="text-2xl text-center dark:text-white">Set Up Your Budget Categories</CardTitle>
+            <p className="text-center text-gray-600 dark:text-gray-300">
               Choose categories and set monthly budgets for each
             </p>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex justify-between text-sm">
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex justify-between text-sm dark:text-gray-300">
                 <span>Monthly Income:</span>
                 <span className="font-bold">${monthlyIncome.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm dark:text-gray-300">
                 <span>Total Allocated:</span>
                 <span className="font-bold">${totalAllocated.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm border-t pt-2 mt-2">
+              <div className="flex justify-between text-sm border-t dark:border-gray-600 pt-2 mt-2 dark:text-gray-300">
                 <span>Remaining:</span>
-                <span className={`font-bold ${remainingIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`font-bold ${remainingIncome >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   ${remainingIncome.toLocaleString()}
                 </span>
               </div>
@@ -133,9 +132,9 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
         </Card>
 
         {/* Preset Categories */}
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">Common Categories</CardTitle>
+            <CardTitle className="text-lg dark:text-white">Common Categories</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -147,7 +146,7 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
                       checked={selectedCategories.has(category.name)}
                       onCheckedChange={() => handleCategoryToggle(category.name)}
                     />
-                    <Label htmlFor={category.name} className="flex items-center gap-2">
+                    <Label htmlFor={category.name} className="flex items-center gap-2 dark:text-gray-200">
                       <div 
                         className="w-3 h-3 rounded-full" 
                         style={{ backgroundColor: category.color }}
@@ -162,7 +161,7 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
                         placeholder="Monthly budget amount"
                         value={categoryBudgets[category.name] || ""}
                         onChange={(e) => handleBudgetChange(category.name, Number(e.target.value))}
-                        className="w-full"
+                        className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       />
                     </div>
                   )}
@@ -173,9 +172,9 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
         </Card>
 
         {/* Custom Categories */}
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">Custom Categories</CardTitle>
+            <CardTitle className="text-lg dark:text-white">Custom Categories</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -187,7 +186,7 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
                         checked={selectedCategories.has(category.name)}
                         onCheckedChange={() => handleCategoryToggle(category.name)}
                       />
-                      <Label className="flex items-center gap-2">
+                      <Label className="flex items-center gap-2 dark:text-gray-200">
                         <div 
                           className="w-3 h-3 rounded-full" 
                           style={{ backgroundColor: category.color }}
@@ -199,6 +198,7 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeCustomCategory(category.name)}
+                      className="dark:text-gray-300 dark:hover:text-white"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -210,7 +210,7 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
                         placeholder="Monthly budget amount"
                         value={categoryBudgets[category.name] || ""}
                         onChange={(e) => handleBudgetChange(category.name, Number(e.target.value))}
-                        className="w-full"
+                        className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       />
                     </div>
                   )}
@@ -223,6 +223,7 @@ const CategorySetup = ({ monthlyIncome, onComplete }: CategorySetupProps) => {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addCustomCategory()}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 />
                 <Button onClick={addCustomCategory} size="sm">
                   <Plus className="w-4 h-4" />
