@@ -124,7 +124,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_monthly_spending_summary: {
+        Args: { start_date?: string; end_date?: string }
+        Returns: {
+          user_id: string
+          category_id: string
+          category_name: string
+          category_color: string
+          month: string
+          total_spent: number
+          transaction_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

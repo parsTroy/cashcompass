@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import BudgetManagement from "./pages/BudgetManagement";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,11 @@ const App = () => (
             <Route path="/budget-management" element={
               <ProtectedRoute>
                 <BudgetManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
               </ProtectedRoute>
             } />
             <Route path="/login" element={<Auth />} />

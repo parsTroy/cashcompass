@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut, Settings } from "lucide-react";
+import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut, Settings, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -297,6 +297,15 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">CashCompass</h1>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/analytics')}
+              className="text-gray-600 dark:text-gray-300"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
+            </Button>
             <Button
               variant="ghost"
               size="sm"
