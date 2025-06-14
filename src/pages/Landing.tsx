@@ -37,10 +37,10 @@ const Landing = () => {
               {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/login">Login</Link>
+              <Link to="/auth">Login</Link>
             </Button>
             <Button asChild>
-              <Link to="/signup">Sign Up</Link>
+              <Link to="/auth">Sign Up</Link>
             </Button>
           </div>
         </div>
@@ -57,7 +57,7 @@ const Landing = () => {
             Let CashCompass guide you to financial success with intelligent budget tracking that helps you maximize savings and build lasting wealth.
           </p>
           <Button size="lg" className="text-lg px-8 py-6" asChild>
-            <Link to="/dashboard">Start Your Journey</Link>
+            <Link to="/auth">Start Your Journey</Link>
           </Button>
         </div>
       </section>
@@ -128,7 +128,7 @@ const Landing = () => {
             Join thousands of users who have found their financial direction with CashCompass.
           </p>
           <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
-            <Link to="/dashboard">Get Started Free</Link>
+            <Link to="/auth">Get Started Free</Link>
           </Button>
         </div>
       </section>

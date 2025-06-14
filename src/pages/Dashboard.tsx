@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun } from "lucide-react";
+import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
 
@@ -18,6 +19,7 @@ export interface BudgetCategory {
 }
 
 const Dashboard = () => {
+  const { user, signOut } = useAuth();
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [incomeSet, setIncomeSet] = useState(false);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -36,6 +38,10 @@ const Dashboard = () => {
     setDarkMode(newMode);
     localStorage.setItem('darkMode', newMode.toString());
     document.documentElement.classList.toggle('dark', newMode);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const handleIncomeSubmit = () => {
@@ -69,9 +75,25 @@ const Dashboard = () => {
         <div className="max-w-md mx-auto pt-12">
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="text-center">
-              <DollarSign className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+              <div className="flex justify-between items-center mb-4">
+                <DollarSign className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="text-gray-600 dark:text-gray-300"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
               <CardTitle className="text-2xl dark:text-white">Welcome to CashCompass</CardTitle>
               <p className="text-gray-600 dark:text-gray-300">Let's start by setting your monthly income</p>
+              {user?.email && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Signed in as: {user.email}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -127,6 +149,15 @@ const Dashboard = () => {
               <Calendar className="w-4 h-4 mr-1" />
               {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-gray-600 dark:text-gray-300"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>
