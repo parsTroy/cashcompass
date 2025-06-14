@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import type { BudgetCategory } from "@/pages/Dashboard";
 
 const PRESET_COLORS = [
@@ -21,59 +23,205 @@ const PRESET_COLORS = [
 const BudgetManagement = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
   const [newCategory, setNewCategory] = useState({ name: "", budgetAmount: 0 });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Load data from localStorage (in a real app, this would come from Supabase)
+  // Load data from Supabase
   useEffect(() => {
-    const savedCategories = localStorage.getItem('budgetCategories');
-    const savedIncome = localStorage.getItem('monthlyIncome');
-    
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories));
+    if (user) {
+      loadData();
     }
-    if (savedIncome) {
-      setMonthlyIncome(Number(savedIncome));
-    }
-  }, []);
+  }, [user]);
 
-  const saveCategories = (updatedCategories: BudgetCategory[]) => {
-    setCategories(updatedCategories);
-    localStorage.setItem('budgetCategories', JSON.stringify(updatedCategories));
+  const loadData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Load user settings
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('monthly_income')
+        .eq('user_id', user.id)
+        .single();
+
+      if (settings) {
+        setMonthlyIncome(settings.monthly_income);
+      }
+
+      // Load budget categories
+      const { data: budgetCategories } = await supabase
+        .from('budget_categories')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (budgetCategories) {
+        // Load expenses for each category to calculate spent amounts
+        const { data: expenses } = await supabase
+          .from('expenses')
+          .select('category_id, amount')
+          .eq('user_id', user.id);
+
+        const expensesByCategory = expenses?.reduce((acc, expense) => {
+          acc[expense.category_id] = (acc[expense.category_id] || 0) + Number(expense.amount);
+          return acc;
+        }, {} as Record<string, number>) || {};
+
+        const categoriesWithSpent = budgetCategories.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          budgetAmount: Number(cat.budget_amount),
+          spent: expensesByCategory[cat.id] || 0,
+          color: cat.color
+        }));
+
+        setCategories(categoriesWithSpent);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddCategory = () => {
-    if (!newCategory.name || newCategory.budgetAmount <= 0) return;
+  const handleAddCategory = async () => {
+    if (!newCategory.name || newCategory.budgetAmount <= 0 || !user) return;
 
-    const randomColor = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
-    const category: BudgetCategory = {
-      id: `cat-${Date.now()}`,
-      name: newCategory.name,
-      budgetAmount: newCategory.budgetAmount,
-      spent: 0,
-      color: randomColor
-    };
+    try {
+      const randomColor = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
+      
+      const { data, error } = await supabase
+        .from('budget_categories')
+        .insert({
+          name: newCategory.name,
+          budget_amount: newCategory.budgetAmount,
+          color: randomColor,
+          user_id: user.id
+        })
+        .select()
+        .single();
 
-    saveCategories([...categories, category]);
-    setNewCategory({ name: "", budgetAmount: 0 });
-    setShowAddDialog(false);
+      if (error) throw error;
+
+      const category: BudgetCategory = {
+        id: data.id,
+        name: data.name,
+        budgetAmount: Number(data.budget_amount),
+        spent: 0,
+        color: data.color
+      };
+
+      setCategories(prev => [...prev, category]);
+      setNewCategory({ name: "", budgetAmount: 0 });
+      setShowAddDialog(false);
+      
+      toast({
+        title: "Success",
+        description: "Category added successfully!"
+      });
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add category. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEditCategory = (category: BudgetCategory) => {
-    const updatedCategories = categories.map(cat =>
-      cat.id === category.id ? category : cat
+  const handleEditCategory = async (category: BudgetCategory) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('budget_categories')
+        .update({
+          name: category.name,
+          budget_amount: category.budgetAmount
+        })
+        .eq('id', category.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const updatedCategories = categories.map(cat =>
+        cat.id === category.id ? category : cat
+      );
+      setCategories(updatedCategories);
+      setEditingCategory(null);
+      
+      toast({
+        title: "Success",
+        description: "Category updated successfully!"
+      });
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update category. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!user) return;
+
+    try {
+      // First delete all expenses for this category
+      await supabase
+        .from('expenses')
+        .delete()
+        .eq('category_id', categoryId)
+        .eq('user_id', user.id);
+
+      // Then delete the category
+      const { error } = await supabase
+        .from('budget_categories')
+        .delete()
+        .eq('id', categoryId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const updatedCategories = categories.filter(cat => cat.id !== categoryId);
+      setCategories(updatedCategories);
+      
+      toast({
+        title: "Success",
+        description: "Category deleted successfully!"
+      });
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading your budget categories...</p>
+        </div>
+      </div>
     );
-    saveCategories(updatedCategories);
-    setEditingCategory(null);
-  };
-
-  const handleDeleteCategory = (categoryId: string) => {
-    const updatedCategories = categories.filter(cat => cat.id !== categoryId);
-    saveCategories(updatedCategories);
-  };
+  }
 
   const totalBudget = categories.reduce((sum, cat) => sum + cat.budgetAmount, 0);
   const remainingIncome = monthlyIncome - totalBudget;

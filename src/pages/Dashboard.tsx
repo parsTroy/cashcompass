@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
 
@@ -22,12 +24,14 @@ export interface BudgetCategory {
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [incomeSet, setIncomeSet] = useState(false);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [categoriesSet, setCategoriesSet] = useState(false);
   const [showExpenseEntry, setShowExpenseEntry] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
@@ -35,21 +39,71 @@ const Dashboard = () => {
     document.documentElement.classList.toggle('dark', isDark);
   }, []);
 
-  // Load saved data from localStorage
+  // Load user data from Supabase
   useEffect(() => {
-    const savedIncome = localStorage.getItem('monthlyIncome');
-    const savedCategories = localStorage.getItem('budgetCategories');
-    
-    if (savedIncome) {
-      setMonthlyIncome(Number(savedIncome));
-      setIncomeSet(true);
+    if (user) {
+      loadUserData();
     }
-    
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories));
-      setCategoriesSet(true);
+  }, [user]);
+
+  const loadUserData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Load user settings (monthly income)
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('monthly_income')
+        .eq('user_id', user.id)
+        .single();
+
+      if (settings) {
+        setMonthlyIncome(settings.monthly_income);
+        setIncomeSet(settings.monthly_income > 0);
+      }
+
+      // Load budget categories
+      const { data: budgetCategories } = await supabase
+        .from('budget_categories')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (budgetCategories && budgetCategories.length > 0) {
+        // Load expenses for each category to calculate spent amounts
+        const { data: expenses } = await supabase
+          .from('expenses')
+          .select('category_id, amount')
+          .eq('user_id', user.id);
+
+        const expensesByCategory = expenses?.reduce((acc, expense) => {
+          acc[expense.category_id] = (acc[expense.category_id] || 0) + Number(expense.amount);
+          return acc;
+        }, {} as Record<string, number>) || {};
+
+        const categoriesWithSpent = budgetCategories.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          budgetAmount: Number(cat.budget_amount),
+          spent: expensesByCategory[cat.id] || 0,
+          color: cat.color
+        }));
+
+        setCategories(categoriesWithSpent);
+        setCategoriesSet(true);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -62,34 +116,112 @@ const Dashboard = () => {
     await signOut();
   };
 
-  const handleIncomeSubmit = () => {
-    if (monthlyIncome > 0) {
-      localStorage.setItem('monthlyIncome', monthlyIncome.toString());
-      setIncomeSet(true);
+  const handleIncomeSubmit = async () => {
+    if (monthlyIncome > 0 && user) {
+      try {
+        const { error } = await supabase
+          .from('user_settings')
+          .update({ monthly_income: monthlyIncome })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        setIncomeSet(true);
+        toast({
+          title: "Success",
+          description: "Monthly income saved successfully!"
+        });
+      } catch (error) {
+        console.error('Error saving income:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save monthly income. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const handleCategoriesComplete = (selectedCategories: BudgetCategory[]) => {
-    setCategories(selectedCategories);
-    localStorage.setItem('budgetCategories', JSON.stringify(selectedCategories));
-    setCategoriesSet(true);
+  const handleCategoriesComplete = async (selectedCategories: BudgetCategory[]) => {
+    if (!user) return;
+
+    try {
+      // Save categories to Supabase
+      const categoriesToInsert = selectedCategories.map(cat => ({
+        name: cat.name,
+        budget_amount: cat.budgetAmount,
+        color: cat.color,
+        user_id: user.id
+      }));
+
+      const { error } = await supabase
+        .from('budget_categories')
+        .insert(categoriesToInsert);
+
+      if (error) throw error;
+
+      setCategories(selectedCategories);
+      setCategoriesSet(true);
+      toast({
+        title: "Success",
+        description: "Budget categories saved successfully!"
+      });
+    } catch (error) {
+      console.error('Error saving categories:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save budget categories. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const addExpense = (categoryId: string, amount: number) => {
-    const updatedCategories = categories.map(cat => 
-      cat.id === categoryId 
-        ? { ...cat, spent: cat.spent + amount }
-        : cat
+  const addExpense = async (categoryId: string, amount: number) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .insert({
+          user_id: user.id,
+          category_id: categoryId,
+          amount: amount
+        });
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedCategories = categories.map(cat => 
+        cat.id === categoryId 
+          ? { ...cat, spent: cat.spent + amount }
+          : cat
+      );
+      setCategories(updatedCategories);
+
+      toast({
+        title: "Success",
+        description: "Expense added successfully!"
+      });
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add expense. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
+        </div>
+      </div>
     );
-    setCategories(updatedCategories);
-    localStorage.setItem('budgetCategories', JSON.stringify(updatedCategories));
-  };
-
-  const totalBudget = categories.reduce((sum, cat) => sum + cat.budgetAmount, 0);
-  const totalSpent = categories.reduce((sum, cat) => sum + cat.spent, 0);
-  const remainingBudget = monthlyIncome - totalBudget;
-  const actualRemaining = monthlyIncome - totalSpent;
-  const budgetUtilization = monthlyIncome > 0 ? (totalBudget / monthlyIncome) * 100 : 0;
+  }
 
   if (!incomeSet) {
     return (
@@ -151,6 +283,12 @@ const Dashboard = () => {
       />
     );
   }
+
+  const totalBudget = categories.reduce((sum, cat) => sum + cat.budgetAmount, 0);
+  const totalSpent = categories.reduce((sum, cat) => sum + cat.spent, 0);
+  const remainingBudget = monthlyIncome - totalBudget;
+  const actualRemaining = monthlyIncome - totalSpent;
+  const budgetUtilization = monthlyIncome > 0 ? (totalBudget / monthlyIncome) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
