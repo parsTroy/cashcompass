@@ -11,6 +11,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import BudgetManagement from "./pages/BudgetManagement";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/budget-management" element={
+              <ProtectedRoute>
+                <BudgetManagement />
               </ProtectedRoute>
             } />
             <Route path="/login" element={<Auth />} />

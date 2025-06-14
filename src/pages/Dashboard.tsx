@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut } from "lucide-react";
+import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
 
@@ -20,6 +21,7 @@ export interface BudgetCategory {
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [incomeSet, setIncomeSet] = useState(false);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -31,6 +33,22 @@ const Dashboard = () => {
     const isDark = localStorage.getItem('darkMode') === 'true';
     setDarkMode(isDark);
     document.documentElement.classList.toggle('dark', isDark);
+  }, []);
+
+  // Load saved data from localStorage
+  useEffect(() => {
+    const savedIncome = localStorage.getItem('monthlyIncome');
+    const savedCategories = localStorage.getItem('budgetCategories');
+    
+    if (savedIncome) {
+      setMonthlyIncome(Number(savedIncome));
+      setIncomeSet(true);
+    }
+    
+    if (savedCategories) {
+      setCategories(JSON.parse(savedCategories));
+      setCategoriesSet(true);
+    }
   }, []);
 
   const toggleDarkMode = () => {
@@ -46,21 +64,25 @@ const Dashboard = () => {
 
   const handleIncomeSubmit = () => {
     if (monthlyIncome > 0) {
+      localStorage.setItem('monthlyIncome', monthlyIncome.toString());
       setIncomeSet(true);
     }
   };
 
   const handleCategoriesComplete = (selectedCategories: BudgetCategory[]) => {
     setCategories(selectedCategories);
+    localStorage.setItem('budgetCategories', JSON.stringify(selectedCategories));
     setCategoriesSet(true);
   };
 
   const addExpense = (categoryId: string, amount: number) => {
-    setCategories(prev => prev.map(cat => 
+    const updatedCategories = categories.map(cat => 
       cat.id === categoryId 
         ? { ...cat, spent: cat.spent + amount }
         : cat
-    ));
+    );
+    setCategories(updatedCategories);
+    localStorage.setItem('budgetCategories', JSON.stringify(updatedCategories));
   };
 
   const totalBudget = categories.reduce((sum, cat) => sum + cat.budgetAmount, 0);
@@ -137,6 +159,15 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">CashCompass</h1>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/budget-management')}
+              className="text-gray-600 dark:text-gray-300"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Budget
+            </Button>
             <Button
               variant="ghost"
               size="icon"
