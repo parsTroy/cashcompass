@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Cell } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
 
 interface MonthlyData {
   user_id: string;
@@ -307,7 +306,7 @@ const Analytics = () => {
                 <ChartContainer config={chartConfig} className="h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
-                      <RechartsPieChart
+                      <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
@@ -318,7 +317,7 @@ const Analytics = () => {
                         {pieData.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
-                      </RechartsPieChart>
+                      </Pie>
                       <ChartTooltip content={<ChartTooltipContent />} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
