@@ -26,7 +26,7 @@ const Landing = () => {
       {/* Header */}
       <header className="px-4 py-6">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Wealthify</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">CashCompass</h1>
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
@@ -50,14 +50,14 @@ const Landing = () => {
       <section className="px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Build Your Wealth
+            Navigate Your Wealth
             <span className="text-blue-600 dark:text-blue-400 block">Smart Budgeting</span>
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Take control of your finances with intelligent budget tracking that helps you maximize savings and build lasting wealth.
+            Let CashCompass guide you to financial success with intelligent budget tracking that helps you maximize savings and build lasting wealth.
           </p>
           <Button size="lg" className="text-lg px-8 py-6" asChild>
-            <Link to="/dashboard">Start Building Wealth</Link>
+            <Link to="/dashboard">Start Your Journey</Link>
           </Button>
         </div>
       </section>
@@ -66,7 +66,7 @@ const Landing = () => {
       <section className="px-4 py-12 bg-white dark:bg-gray-800">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            Why Choose Wealthify?
+            Why Choose CashCompass?
           </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="text-center dark:bg-gray-700 dark:border-gray-600">
@@ -123,9 +123,9 @@ const Landing = () => {
       {/* CTA Section */}
       <section className="px-4 py-12 bg-blue-600 dark:bg-blue-800 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h3 className="text-3xl font-bold mb-4">Ready to Build Your Wealth?</h3>
+          <h3 className="text-3xl font-bold mb-4">Ready to Navigate Your Wealth?</h3>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of users who have taken control of their finances with Wealthify.
+            Join thousands of users who have found their financial direction with CashCompass.
           </p>
           <Button size="lg" variant="secondary" className="text-lg px-8 py-6" asChild>
             <Link to="/dashboard">Get Started Free</Link>

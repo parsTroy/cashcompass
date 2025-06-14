@@ -70,7 +70,7 @@ const Dashboard = () => {
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="text-center">
               <DollarSign className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-              <CardTitle className="text-2xl dark:text-white">Welcome to Wealthify</CardTitle>
+              <CardTitle className="text-2xl dark:text-white">Welcome to CashCompass</CardTitle>
               <p className="text-gray-600 dark:text-gray-300">Let's start by setting your monthly income</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -113,7 +113,7 @@ const Dashboard = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm p-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Wealthify</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">CashCompass</h1>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
