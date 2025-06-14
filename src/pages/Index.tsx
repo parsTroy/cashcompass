@@ -1,8 +1,16 @@
 
-import Landing from "./Landing";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  return <Landing />;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect to landing page
+    navigate("/landing");
+  }, [navigate]);
+
+  return null;
 };
 
 export default Index;

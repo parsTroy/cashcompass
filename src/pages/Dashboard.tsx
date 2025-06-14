@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank } from "lucide-react";
+import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun } from "lucide-react";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
 
@@ -23,6 +23,20 @@ const Dashboard = () => {
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [categoriesSet, setCategoriesSet] = useState(false);
   const [showExpenseEntry, setShowExpenseEntry] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const isDark = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', newMode.toString());
+    document.documentElement.classList.toggle('dark', newMode);
+  };
 
   const handleIncomeSubmit = () => {
     if (monthlyIncome > 0) {
@@ -51,24 +65,24 @@ const Dashboard = () => {
 
   if (!incomeSet) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-md mx-auto pt-12">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="text-center">
-              <DollarSign className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <CardTitle className="text-2xl">Welcome to BudgetBloom</CardTitle>
-              <p className="text-gray-600">Let's start by setting your monthly income</p>
+              <DollarSign className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+              <CardTitle className="text-2xl dark:text-white">Welcome to Wealthify</CardTitle>
+              <p className="text-gray-600 dark:text-gray-300">Let's start by setting your monthly income</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="income">Monthly Income</Label>
+                <Label htmlFor="income" className="dark:text-gray-200">Monthly Income</Label>
                 <Input
                   id="income"
                   type="number"
                   placeholder="Enter your monthly income"
                   value={monthlyIncome || ""}
                   onChange={(e) => setMonthlyIncome(Number(e.target.value))}
-                  className="text-lg"
+                  className="text-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <Button 
@@ -95,23 +109,33 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm p-4">
+      <header className="bg-white dark:bg-gray-800 shadow-sm p-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">BudgetBloom</h1>
-          <Badge variant="secondary" className="text-sm">
-            <Calendar className="w-4 h-4 mr-1" />
-            {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-          </Badge>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Wealthify</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleDarkMode}
+              className="text-gray-600 dark:text-gray-300"
+            >
+              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            <Badge variant="secondary" className="text-sm dark:bg-gray-700 dark:text-gray-300">
+              <Calendar className="w-4 h-4 mr-1" />
+              {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </Badge>
+          </div>
         </div>
       </header>
 
       <div className="max-w-6xl mx-auto p-4">
         {/* Budget Allocation Overview */}
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-white">
               <TrendingUp className="w-5 h-5" />
               Budget Allocation Overview
             </CardTitle>
@@ -120,21 +144,21 @@ const Dashboard = () => {
             <div className="space-y-6">
               {/* Income Breakdown */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Monthly Income</p>
-                  <p className="text-2xl font-bold text-green-600">${monthlyIncome.toLocaleString()}</p>
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Monthly Income</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">${monthlyIncome.toLocaleString()}</p>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Total Budgeted</p>
-                  <p className="text-2xl font-bold text-blue-600">${totalBudget.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">{budgetUtilization.toFixed(1)}% of income</p>
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Total Budgeted</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${totalBudget.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{budgetUtilization.toFixed(1)}% of income</p>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Available for Savings</p>
-                  <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Available for Savings</p>
+                  <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-red-600 dark:text-red-400'}`}>
                     ${remainingBudget.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {monthlyIncome > 0 ? ((remainingBudget / monthlyIncome) * 100).toFixed(1) : 0}% of income
                   </p>
                 </div>
@@ -142,12 +166,12 @@ const Dashboard = () => {
 
               {/* Visual Budget Allocation */}
               <div>
-                <div className="flex justify-between text-sm mb-2">
+                <div className="flex justify-between text-sm mb-2 dark:text-gray-300">
                   <span>Budget Allocation</span>
                   <span>{budgetUtilization.toFixed(1)}% allocated</span>
                 </div>
                 <Progress value={Math.min(budgetUtilization, 100)} className="h-3 mb-2" />
-                <div className="flex justify-between text-xs text-gray-600">
+                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                   <span>Budgeted: ${totalBudget.toLocaleString()}</span>
                   <span>Income: ${monthlyIncome.toLocaleString()}</span>
                 </div>
@@ -155,13 +179,13 @@ const Dashboard = () => {
 
               {/* Savings Potential Alert */}
               {remainingBudget > 0 && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <PiggyBank className="w-5 h-5 text-green-600" />
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <PiggyBank className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <div>
-                    <p className="text-sm font-medium text-green-800">
+                    <p className="text-sm font-medium text-green-800 dark:text-green-300">
                       Great! You have ${remainingBudget.toLocaleString()} available for savings or investments
                     </p>
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-green-600 dark:text-green-400">
                       That's {((remainingBudget / monthlyIncome) * 100).toFixed(1)}% of your income you can save!
                     </p>
                   </div>
@@ -169,13 +193,13 @@ const Dashboard = () => {
               )}
 
               {remainingBudget < 0 && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-red-600" />
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-400" />
                   <div>
-                    <p className="text-sm font-medium text-red-800">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">
                       Warning: You're budgeting ${Math.abs(remainingBudget).toLocaleString()} more than your income
                     </p>
-                    <p className="text-xs text-red-600">
+                    <p className="text-xs text-red-600 dark:text-red-400">
                       Consider reducing some budget categories to avoid overspending
                     </p>
                   </div>
@@ -186,9 +210,9 @@ const Dashboard = () => {
         </Card>
 
         {/* Monthly Progress Overview */}
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-white">
               <DollarSign className="w-5 h-5" />
               Monthly Progress
             </CardTitle>
@@ -196,20 +220,20 @@ const Dashboard = () => {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <p className="text-sm text-gray-600">Monthly Income</p>
-                <p className="text-2xl font-bold text-green-600">${monthlyIncome.toLocaleString()}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Monthly Income</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">${monthlyIncome.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Budget</p>
-                <p className="text-2xl font-bold text-blue-600">${totalBudget.toLocaleString()}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Total Budget</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${totalBudget.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Spent</p>
-                <p className="text-2xl font-bold text-orange-600">${totalSpent.toLocaleString()}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Total Spent</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">${totalSpent.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Remaining</p>
-                <p className={`text-2xl font-bold ${actualRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Remaining</p>
+                <p className={`text-2xl font-bold ${actualRemaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   ${actualRemaining.toLocaleString()}
                 </p>
               </div>
@@ -224,9 +248,9 @@ const Dashboard = () => {
             const isOverBudget = percentage > 100;
             
             return (
-              <Card key={category.id} className="relative">
+              <Card key={category.id} className="relative dark:bg-gray-800 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
+                  <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
                     <div 
                       className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: category.color }}
@@ -236,7 +260,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm dark:text-gray-300">
                       <span>Spent: ${category.spent.toLocaleString()}</span>
                       <span>Budget: ${category.budgetAmount.toLocaleString()}</span>
                     </div>
@@ -245,7 +269,7 @@ const Dashboard = () => {
                       className="h-2"
                     />
                     <div className="flex justify-between items-center">
-                      <span className={`text-sm font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-600'}`}>
+                      <span className={`text-sm font-medium ${isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'}`}>
                         {percentage.toFixed(1)}% used
                       </span>
                       {isOverBudget && (
