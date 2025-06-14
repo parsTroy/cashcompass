@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, PieChart, Target, TrendingUp, Moon, Sun } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Landing = () => {
   const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') === 'true';
@@ -26,7 +26,13 @@ const Landing = () => {
       {/* Header */}
       <header className="px-4 py-6">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">CashCompass</h1>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="text-2xl font-bold text-gray-900 dark:text-white hover:bg-transparent p-0"
+          >
+            CashCompass
+          </Button>
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"

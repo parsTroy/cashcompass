@@ -295,7 +295,13 @@ const Dashboard = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm p-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">CashCompass</h1>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="text-xl font-bold text-gray-900 dark:text-white hover:bg-transparent p-0"
+          >
+            CashCompass
+          </Button>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

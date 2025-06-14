@@ -161,6 +161,13 @@ const Analytics = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="text-xl font-bold text-gray-900 dark:text-white hover:bg-transparent p-0"
+            >
+              CashCompass
+            </Button>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Spending Analytics</h1>
           </div>
           <Badge variant="secondary" className="text-sm dark:bg-gray-700 dark:text-gray-300">
