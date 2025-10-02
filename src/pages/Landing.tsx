@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,9 @@ const Landing = () => {
               className="text-gray-600 dark:text-gray-300"
             >
               {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/support">Support</Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/auth">Login</Link>
@@ -138,6 +142,23 @@ const Landing = () => {
           </Button>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="px-4 py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+        <div className="max-w-6xl mx-auto text-center">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            © 2024 CashCompass. All rights reserved.
+          </p>
+          <div className="flex justify-center space-x-6">
+            <Link to="/support" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+              Support
+            </Link>
+            <a href="mailto:support@dividnd.com" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+              Contact
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

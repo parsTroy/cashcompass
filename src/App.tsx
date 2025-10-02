@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import BudgetManagement from "./pages/BudgetManagement";
 import Analytics from "./pages/Analytics";
+import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
                 <Analytics />
               </ProtectedRoute>
             } />
+            <Route path="/support" element={<Support />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
