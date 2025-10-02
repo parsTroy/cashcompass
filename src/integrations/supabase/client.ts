@@ -5,9 +5,11 @@ import type { Database } from './types'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Supabase client configured for cash-compass schema
+// Supabase client (using public schema for compatibility)
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  db: {
-    schema: 'cash-compass'
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
   }
 })

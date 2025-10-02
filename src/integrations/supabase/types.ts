@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  "cash-compass": {
+  public: {
     Tables: {
       budget_categories: {
         Row: {
