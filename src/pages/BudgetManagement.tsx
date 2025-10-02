@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { db } from "@/lib/database";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import type { BudgetCategory } from "@/pages/Dashboard";
 
@@ -45,16 +45,16 @@ const BudgetManagement = () => {
       setLoading(true);
       
       // Load user settings
-      const settings = await db.getUserSettings();
+      const settings = await api.getUserSettings();
       if (settings) {
         setMonthlyIncome(Number(settings.monthly_income));
       }
 
       // Load budget categories
-      const budgetCategories = await db.getBudgetCategories();
+      const budgetCategories = await api.getBudgetCategories();
       if (budgetCategories) {
         // Load expenses for each category to calculate spent amounts
-        const expenses = await db.getExpenses();
+        const expenses = await api.getExpenses();
         const expensesByCategory = expenses?.reduce((acc, expense) => {
           acc[expense.category_id] = (acc[expense.category_id] || 0) + Number(expense.amount);
           return acc;
@@ -88,7 +88,7 @@ const BudgetManagement = () => {
     try {
       const randomColor = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
       
-      const data = await db.createBudgetCategory({
+      const data = await api.createBudgetCategory({
         name: newCategory.name,
         budget_amount: newCategory.budgetAmount,
         color: randomColor
@@ -124,7 +124,7 @@ const BudgetManagement = () => {
     if (!user) return;
 
     try {
-      await db.updateBudgetCategory(category.id, {
+      await api.updateBudgetCategory(category.id, {
         name: category.name,
         budget_amount: category.budgetAmount
       });
@@ -154,13 +154,13 @@ const BudgetManagement = () => {
 
     try {
       // First delete all expenses for this category
-      const expenses = await db.getExpensesByCategory(categoryId);
+      const expenses = await api.getExpensesByCategory(categoryId);
       for (const expense of expenses) {
-        await db.deleteExpense(expense.id);
+        await api.deleteExpense(expense.id);
       }
 
       // Then delete the category
-      await db.deleteBudgetCategory(categoryId);
+      await api.deleteBudgetCategory(categoryId);
 
       const updatedCategories = categories.filter(cat => cat.id !== categoryId);
       setCategories(updatedCategories);

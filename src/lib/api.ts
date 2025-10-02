@@ -1,62 +1,38 @@
-import { supabase } from '@/integrations/supabase/client'
-import type { User } from '@supabase/supabase-js'
+// API service for database operations
+// This simulates API routes that would exist in a Next.js project
 
-export class DatabaseService {
-  private static instance: DatabaseService
+import { supabase } from '@/integrations/supabase/client'
+
+// Get the current user from Supabase auth
+async function getCurrentUser() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('User must be authenticated')
+  }
+  return user
+}
+
+// API service class
+export class ApiService {
+  private static instance: ApiService
 
   private constructor() {}
 
-  static getInstance(): DatabaseService {
-    if (!DatabaseService.instance) {
-      DatabaseService.instance = new DatabaseService()
+  static getInstance(): ApiService {
+    if (!ApiService.instance) {
+      ApiService.instance = new ApiService()
     }
-    return DatabaseService.instance
-  }
-
-  // Authentication methods using Supabase
-  async signUp(email: string, password: string) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    return { data, error }
-  }
-
-  async signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { data, error }
-  }
-
-  async signOut() {
-    const { error } = await supabase.auth.signOut()
-    return { error }
-  }
-
-  async getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser()
-    return user
-  }
-
-  async onAuthStateChange(callback: (user: User | null) => void) {
-    return supabase.auth.onAuthStateChange((event, session) => {
-      callback(session?.user ?? null)
-    })
-  }
-
-  // Database methods using Supabase client
-  private async ensureUser() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('User must be authenticated to perform database operations')
-    }
-    return user
+    return ApiService.instance
   }
 
   // Profile operations
   async createProfile(userId: string, email?: string) {
+    const user = await getCurrentUser()
+    if (user.id !== userId) {
+      throw new Error('Unauthorized')
+    }
+
+    // This would be a Prisma operation in a real API route
     const { data, error } = await supabase
       .from('profiles')
       .insert({
@@ -71,6 +47,11 @@ export class DatabaseService {
   }
 
   async getProfile(userId: string) {
+    const user = await getCurrentUser()
+    if (user.id !== userId) {
+      throw new Error('Unauthorized')
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .select(`
@@ -86,6 +67,11 @@ export class DatabaseService {
   }
 
   async updateProfile(userId: string, data: { email?: string }) {
+    const user = await getCurrentUser()
+    if (user.id !== userId) {
+      throw new Error('Unauthorized')
+    }
+
     const { data: result, error } = await supabase
       .from('profiles')
       .update(data)
@@ -103,7 +89,8 @@ export class DatabaseService {
     color?: string
     budget_amount?: number
   }) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data: result, error } = await supabase
       .from('budget_categories')
       .insert({
@@ -118,7 +105,8 @@ export class DatabaseService {
   }
 
   async getBudgetCategories() {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data, error } = await supabase
       .from('budget_categories')
       .select('*')
@@ -134,7 +122,8 @@ export class DatabaseService {
     color?: string
     budget_amount?: number
   }) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data: result, error } = await supabase
       .from('budget_categories')
       .update(data)
@@ -148,7 +137,8 @@ export class DatabaseService {
   }
 
   async deleteBudgetCategory(id: string) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { error } = await supabase
       .from('budget_categories')
       .delete()
@@ -164,7 +154,8 @@ export class DatabaseService {
     description?: string
     category_id: string
   }) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data: result, error } = await supabase
       .from('expenses')
       .insert({
@@ -182,7 +173,8 @@ export class DatabaseService {
   }
 
   async getExpenses() {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data, error } = await supabase
       .from('expenses')
       .select(`
@@ -197,7 +189,8 @@ export class DatabaseService {
   }
 
   async getExpensesByCategory(categoryId: string) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data, error } = await supabase
       .from('expenses')
       .select(`
@@ -217,7 +210,8 @@ export class DatabaseService {
     description?: string
     category_id?: string
   }) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data: result, error } = await supabase
       .from('expenses')
       .update(data)
@@ -234,7 +228,8 @@ export class DatabaseService {
   }
 
   async deleteExpense(id: string) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { error } = await supabase
       .from('expenses')
       .delete()
@@ -246,7 +241,8 @@ export class DatabaseService {
 
   // User Settings operations
   async createUserSettings(monthlyIncome: number) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data, error } = await supabase
       .from('user_settings')
       .insert({
@@ -261,7 +257,8 @@ export class DatabaseService {
   }
 
   async getUserSettings() {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
+    
     const { data, error } = await supabase
       .from('user_settings')
       .select('*')
@@ -273,7 +270,7 @@ export class DatabaseService {
   }
 
   async updateUserSettings(data: { monthly_income?: number }) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
     
     // Try to update first
     const { data: result, error: updateError } = await supabase
@@ -304,7 +301,7 @@ export class DatabaseService {
 
   // Analytics methods
   async getMonthlySpendingSummary(startDate?: Date, endDate?: Date) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
     
     let query = supabase
       .from('expenses')
@@ -353,7 +350,7 @@ export class DatabaseService {
   }
 
   async getExpensesByMonth(year: number, month: number) {
-    const user = await this.ensureUser()
+    const user = await getCurrentUser()
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0, 23, 59, 59)
 
@@ -374,4 +371,4 @@ export class DatabaseService {
 }
 
 // Export singleton instance
-export const db = DatabaseService.getInstance()
+export const api = ApiService.getInstance()

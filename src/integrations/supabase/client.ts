@@ -1,12 +1,12 @@
-// Supabase client for authentication and database operations
+// Supabase client for authentication only
+// Database operations are handled by Prisma through API service
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from './types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Supabase client (using public schema for compatibility)
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+// Supabase client for authentication
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut, Settings, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { db } from "@/lib/database";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
@@ -53,17 +53,17 @@ const Dashboard = () => {
       setLoading(true);
       
       // Load user settings (monthly income)
-      const settings = await db.getUserSettings();
+      const settings = await api.getUserSettings();
       if (settings) {
         setMonthlyIncome(Number(settings.monthly_income));
         setIncomeSet(Number(settings.monthly_income) > 0);
       }
 
       // Load budget categories
-      const budgetCategories = await db.getBudgetCategories();
+      const budgetCategories = await api.getBudgetCategories();
       if (budgetCategories && budgetCategories.length > 0) {
         // Load expenses for each category to calculate spent amounts
-        const expenses = await db.getExpenses();
+        const expenses = await api.getExpenses();
         const expensesByCategory = expenses?.reduce((acc, expense) => {
           acc[expense.category_id] = (acc[expense.category_id] || 0) + Number(expense.amount);
           return acc;
@@ -106,7 +106,7 @@ const Dashboard = () => {
   const handleIncomeSubmit = async () => {
     if (monthlyIncome > 0 && user) {
       try {
-        await db.updateUserSettings({ monthly_income: monthlyIncome });
+        await api.updateUserSettings({ monthly_income: monthlyIncome });
         setIncomeSet(true);
         toast({
           title: "Success",
@@ -127,19 +127,12 @@ const Dashboard = () => {
     if (!user) return;
 
     try {
-      // Save categories to Supabase
-      const categoriesToInsert = selectedCategories.map(cat => ({
-        name: cat.name,
-        budget_amount: cat.budgetAmount,
-        color: cat.color,
-        user_id: user.id
-      }));
-
-      for (const category of categoriesToInsert) {
-        await db.createBudgetCategory({
+      // Save categories using API service
+      for (const category of selectedCategories) {
+        await api.createBudgetCategory({
           name: category.name,
           color: category.color,
-          budget_amount: category.budget_amount
+          budget_amount: category.budgetAmount
         });
       }
 
@@ -163,7 +156,7 @@ const Dashboard = () => {
     if (!user) return;
 
     try {
-      await db.createExpense({
+      await api.createExpense({
         category_id: categoryId,
         amount: amount
       });

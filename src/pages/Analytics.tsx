@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, TrendingUp, Calendar, BarChart3, PieChart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { db } from "@/lib/database";
+import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
@@ -65,7 +65,7 @@ const Analytics = () => {
           startDate.setMonth(startDate.getMonth() - 6);
       }
 
-      const data = await db.getMonthlySpendingSummary(startDate, endDate);
+      const data = await api.getMonthlySpendingSummary(startDate, endDate);
       setMonthlyData(data || []);
     } catch (error) {
       console.error('Error loading analytics data:', error);
