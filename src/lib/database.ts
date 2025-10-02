@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client'
-import { prisma } from '@/lib/prisma'
 import type { User } from '@supabase/supabase-js'
 
 export class DatabaseService {
@@ -54,7 +53,7 @@ export class DatabaseService {
     })
   }
 
-  // Database methods using Prisma
+  // Database methods using Supabase client
   private async ensureUser() {
     if (!this.currentUser) {
       throw new Error('User must be authenticated to perform database operations')
@@ -64,29 +63,44 @@ export class DatabaseService {
 
   // Profile operations
   async createProfile(userId: string, email?: string) {
-    return await prisma.profile.create({
-      data: {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert({
         id: userId,
         email,
-      },
-    })
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   }
 
   async getProfile(userId: string) {
-    return await prisma.profile.findUnique({
-      where: { id: userId },
-      include: {
-        budget_categories: true,
-        user_settings: true,
-      },
-    })
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        budget_categories(*),
+        user_settings(*)
+      `)
+      .eq('id', userId)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') throw error
+    return data
   }
 
   async updateProfile(userId: string, data: { email?: string }) {
-    return await prisma.profile.update({
-      where: { id: userId },
-      data,
-    })
+    const { data: result, error } = await supabase
+      .from('profiles')
+      .update(data)
+      .eq('id', userId)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result
   }
 
   // Budget Category operations
@@ -96,20 +110,29 @@ export class DatabaseService {
     budget_amount?: number
   }) {
     const user = await this.ensureUser()
-    return await prisma.budgetCategory.create({
-      data: {
+    const { data: result, error } = await supabase
+      .from('budget_categories')
+      .insert({
         ...data,
         user_id: user.id,
-      },
-    })
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result
   }
 
   async getBudgetCategories() {
     const user = await this.ensureUser()
-    return await prisma.budgetCategory.findMany({
-      where: { user_id: user.id },
-      orderBy: { created_at: 'desc' },
-    })
+    const { data, error } = await supabase
+      .from('budget_categories')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
   }
 
   async updateBudgetCategory(id: string, data: {
@@ -118,23 +141,27 @@ export class DatabaseService {
     budget_amount?: number
   }) {
     const user = await this.ensureUser()
-    return await prisma.budgetCategory.update({
-      where: { 
-        id,
-        user_id: user.id, // Ensure user can only update their own categories
-      },
-      data,
-    })
+    const { data: result, error } = await supabase
+      .from('budget_categories')
+      .update(data)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return result
   }
 
   async deleteBudgetCategory(id: string) {
     const user = await this.ensureUser()
-    return await prisma.budgetCategory.delete({
-      where: { 
-        id,
-        user_id: user.id, // Ensure user can only delete their own categories
-      },
-    })
+    const { error } = await supabase
+      .from('budget_categories')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+    
+    if (error) throw error
   }
 
   // Expense operations
@@ -144,40 +171,51 @@ export class DatabaseService {
     category_id: string
   }) {
     const user = await this.ensureUser()
-    return await prisma.expense.create({
-      data: {
+    const { data: result, error } = await supabase
+      .from('expenses')
+      .insert({
         ...data,
         user_id: user.id,
-      },
-      include: {
-        category: true,
-      },
-    })
+      })
+      .select(`
+        *,
+        category:budget_categories(*)
+      `)
+      .single()
+    
+    if (error) throw error
+    return result
   }
 
   async getExpenses() {
     const user = await this.ensureUser()
-    return await prisma.expense.findMany({
-      where: { user_id: user.id },
-      include: {
-        category: true,
-      },
-      orderBy: { created_at: 'desc' },
-    })
+    const { data, error } = await supabase
+      .from('expenses')
+      .select(`
+        *,
+        category:budget_categories(*)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
   }
 
   async getExpensesByCategory(categoryId: string) {
     const user = await this.ensureUser()
-    return await prisma.expense.findMany({
-      where: { 
-        user_id: user.id,
-        category_id: categoryId,
-      },
-      include: {
-        category: true,
-      },
-      orderBy: { created_at: 'desc' },
-    })
+    const { data, error } = await supabase
+      .from('expenses')
+      .select(`
+        *,
+        category:budget_categories(*)
+      `)
+      .eq('user_id', user.id)
+      .eq('category_id', categoryId)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
   }
 
   async updateExpense(id: string, data: {
@@ -186,85 +224,116 @@ export class DatabaseService {
     category_id?: string
   }) {
     const user = await this.ensureUser()
-    return await prisma.expense.update({
-      where: { 
-        id,
-        user_id: user.id, // Ensure user can only update their own expenses
-      },
-      data,
-      include: {
-        category: true,
-      },
-    })
+    const { data: result, error } = await supabase
+      .from('expenses')
+      .update(data)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select(`
+        *,
+        category:budget_categories(*)
+      `)
+      .single()
+    
+    if (error) throw error
+    return result
   }
 
   async deleteExpense(id: string) {
     const user = await this.ensureUser()
-    return await prisma.expense.delete({
-      where: { 
-        id,
-        user_id: user.id, // Ensure user can only delete their own expenses
-      },
-    })
+    const { error } = await supabase
+      .from('expenses')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+    
+    if (error) throw error
   }
 
   // User Settings operations
   async createUserSettings(monthlyIncome: number) {
     const user = await this.ensureUser()
-    return await prisma.userSettings.create({
-      data: {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .insert({
         user_id: user.id,
         monthly_income: monthlyIncome,
-      },
-    })
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
   }
 
   async getUserSettings() {
     const user = await this.ensureUser()
-    return await prisma.userSettings.findUnique({
-      where: { user_id: user.id },
-    })
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') throw error
+    return data
   }
 
   async updateUserSettings(data: { monthly_income?: number }) {
     const user = await this.ensureUser()
-    return await prisma.userSettings.upsert({
-      where: { user_id: user.id },
-      update: data,
-      create: {
-        user_id: user.id,
-        monthly_income: data.monthly_income ?? 0,
-      },
-    })
+    
+    // Try to update first
+    const { data: result, error: updateError } = await supabase
+      .from('user_settings')
+      .update(data)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+    
+    if (updateError && updateError.code === 'PGRST116') {
+      // If no record exists, create it
+      const { data: newResult, error: createError } = await supabase
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          monthly_income: data.monthly_income ?? 0,
+        })
+        .select()
+        .single()
+      
+      if (createError) throw createError
+      return newResult
+    }
+    
+    if (updateError) throw updateError
+    return result
   }
 
   // Analytics methods
   async getMonthlySpendingSummary(startDate?: Date, endDate?: Date) {
     const user = await this.ensureUser()
     
-    const whereClause: any = {
-      user_id: user.id,
-    }
-
+    let query = supabase
+      .from('expenses')
+      .select(`
+        *,
+        category:budget_categories(*)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+    
     if (startDate) {
-      whereClause.created_at = { ...whereClause.created_at, gte: startDate }
+      query = query.gte('created_at', startDate.toISOString())
     }
     if (endDate) {
-      whereClause.created_at = { ...whereClause.created_at, lte: endDate }
+      query = query.lte('created_at', endDate.toISOString())
     }
-
-    const expenses = await prisma.expense.findMany({
-      where: whereClause,
-      include: {
-        category: true,
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    })
-
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    
     // Group by month and category
-    const monthlyData = expenses.reduce((acc, expense) => {
+    const monthlyData = (data || []).reduce((acc, expense) => {
       const month = new Date(expense.created_at).toISOString().split('T')[0].substring(0, 7) // YYYY-MM
       const key = `${month}-${expense.category_id}`
       
@@ -294,19 +363,19 @@ export class DatabaseService {
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0, 23, 59, 59)
 
-    return await prisma.expense.findMany({
-      where: {
-        user_id: user.id,
-        created_at: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      include: {
-        category: true,
-      },
-      orderBy: { created_at: 'desc' },
-    })
+    const { data, error } = await supabase
+      .from('expenses')
+      .select(`
+        *,
+        category:budget_categories(*)
+      `)
+      .eq('user_id', user.id)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
   }
 }
 
