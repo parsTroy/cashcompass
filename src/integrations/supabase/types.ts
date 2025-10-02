@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  public: {
+  "cash-compass": {
     Tables: {
       budget_categories: {
         Row: {
@@ -37,7 +37,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budget_categories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       expenses: {
         Row: {
@@ -70,6 +78,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -117,25 +132,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_monthly_spending_summary: {
-        Args: { start_date?: string; end_date?: string }
-        Returns: {
-          user_id: string
-          category_id: string
-          category_name: string
-          category_color: string
-          month: string
-          total_spent: number
-          transaction_count: number
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
@@ -146,7 +158,7 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "cash-compass">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -246,9 +258,7 @@ export type CompositeTypes<
     ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? CompositeTypeName extends keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-    : never
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
