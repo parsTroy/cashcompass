@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  public: {
+  cash_compass: {
     Tables: {
       budget_categories: {
         Row: {
@@ -146,7 +146,7 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "cash_compass">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -246,13 +246,9 @@ export type CompositeTypes<
     ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  ? CompositeTypeName extends keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+    : never
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
