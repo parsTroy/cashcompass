@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  cash_compass: {
+  public: {
     Tables: {
       budget_categories: {
         Row: {
@@ -146,7 +146,7 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "cash_compass">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
