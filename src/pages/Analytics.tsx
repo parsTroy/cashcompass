@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, TrendingUp, Calendar, BarChart3, PieChart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/database";
 import { useToast } from "@/hooks/use-toast";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
@@ -65,13 +65,7 @@ const Analytics = () => {
           startDate.setMonth(startDate.getMonth() - 6);
       }
 
-      const { data, error } = await supabase.rpc('get_monthly_spending_summary', {
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0]
-      });
-
-      if (error) throw error;
-
+      const data = await db.getMonthlySpendingSummary(startDate, endDate);
       setMonthlyData(data || []);
     } catch (error) {
       console.error('Error loading analytics data:', error);

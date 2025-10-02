@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, DollarSign, Calendar, TrendingUp, PiggyBank, Moon, Sun, LogOut, Settings, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/database";
 import { useToast } from "@/hooks/use-toast";
 import CategorySetup from "@/components/CategorySetup";
 import ExpenseEntry from "@/components/ExpenseEntry";
@@ -53,30 +53,17 @@ const Dashboard = () => {
       setLoading(true);
       
       // Load user settings (monthly income)
-      const { data: settings } = await supabase
-        .from('user_settings')
-        .select('monthly_income')
-        .eq('user_id', user.id)
-        .single();
-
+      const settings = await db.getUserSettings();
       if (settings) {
-        setMonthlyIncome(settings.monthly_income);
-        setIncomeSet(settings.monthly_income > 0);
+        setMonthlyIncome(Number(settings.monthly_income));
+        setIncomeSet(Number(settings.monthly_income) > 0);
       }
 
       // Load budget categories
-      const { data: budgetCategories } = await supabase
-        .from('budget_categories')
-        .select('*')
-        .eq('user_id', user.id);
-
+      const budgetCategories = await db.getBudgetCategories();
       if (budgetCategories && budgetCategories.length > 0) {
         // Load expenses for each category to calculate spent amounts
-        const { data: expenses } = await supabase
-          .from('expenses')
-          .select('category_id, amount')
-          .eq('user_id', user.id);
-
+        const expenses = await db.getExpenses();
         const expensesByCategory = expenses?.reduce((acc, expense) => {
           acc[expense.category_id] = (acc[expense.category_id] || 0) + Number(expense.amount);
           return acc;
@@ -119,13 +106,7 @@ const Dashboard = () => {
   const handleIncomeSubmit = async () => {
     if (monthlyIncome > 0 && user) {
       try {
-        const { error } = await supabase
-          .from('user_settings')
-          .update({ monthly_income: monthlyIncome })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
+        await db.updateUserSettings({ monthly_income: monthlyIncome });
         setIncomeSet(true);
         toast({
           title: "Success",
@@ -154,11 +135,13 @@ const Dashboard = () => {
         user_id: user.id
       }));
 
-      const { error } = await supabase
-        .from('budget_categories')
-        .insert(categoriesToInsert);
-
-      if (error) throw error;
+      for (const category of categoriesToInsert) {
+        await db.createBudgetCategory({
+          name: category.name,
+          color: category.color,
+          budget_amount: category.budget_amount
+        });
+      }
 
       setCategories(selectedCategories);
       setCategoriesSet(true);
@@ -180,15 +163,10 @@ const Dashboard = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('expenses')
-        .insert({
-          user_id: user.id,
-          category_id: categoryId,
-          amount: amount
-        });
-
-      if (error) throw error;
+      await db.createExpense({
+        category_id: categoryId,
+        amount: amount
+      });
 
       // Update local state
       const updatedCategories = categories.map(cat => 

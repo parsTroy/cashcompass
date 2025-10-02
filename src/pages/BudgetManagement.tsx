@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/database";
 import { useToast } from "@/hooks/use-toast";
 import type { BudgetCategory } from "@/pages/Dashboard";
 
@@ -45,29 +45,16 @@ const BudgetManagement = () => {
       setLoading(true);
       
       // Load user settings
-      const { data: settings } = await supabase
-        .from('user_settings')
-        .select('monthly_income')
-        .eq('user_id', user.id)
-        .single();
-
+      const settings = await db.getUserSettings();
       if (settings) {
-        setMonthlyIncome(settings.monthly_income);
+        setMonthlyIncome(Number(settings.monthly_income));
       }
 
       // Load budget categories
-      const { data: budgetCategories } = await supabase
-        .from('budget_categories')
-        .select('*')
-        .eq('user_id', user.id);
-
+      const budgetCategories = await db.getBudgetCategories();
       if (budgetCategories) {
         // Load expenses for each category to calculate spent amounts
-        const { data: expenses } = await supabase
-          .from('expenses')
-          .select('category_id, amount')
-          .eq('user_id', user.id);
-
+        const expenses = await db.getExpenses();
         const expensesByCategory = expenses?.reduce((acc, expense) => {
           acc[expense.category_id] = (acc[expense.category_id] || 0) + Number(expense.amount);
           return acc;
@@ -101,18 +88,11 @@ const BudgetManagement = () => {
     try {
       const randomColor = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
       
-      const { data, error } = await supabase
-        .from('budget_categories')
-        .insert({
-          name: newCategory.name,
-          budget_amount: newCategory.budgetAmount,
-          color: randomColor,
-          user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await db.createBudgetCategory({
+        name: newCategory.name,
+        budget_amount: newCategory.budgetAmount,
+        color: randomColor
+      });
 
       const category: BudgetCategory = {
         id: data.id,
@@ -144,16 +124,10 @@ const BudgetManagement = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('budget_categories')
-        .update({
-          name: category.name,
-          budget_amount: category.budgetAmount
-        })
-        .eq('id', category.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      await db.updateBudgetCategory(category.id, {
+        name: category.name,
+        budget_amount: category.budgetAmount
+      });
 
       const updatedCategories = categories.map(cat =>
         cat.id === category.id ? category : cat
@@ -180,20 +154,13 @@ const BudgetManagement = () => {
 
     try {
       // First delete all expenses for this category
-      await supabase
-        .from('expenses')
-        .delete()
-        .eq('category_id', categoryId)
-        .eq('user_id', user.id);
+      const expenses = await db.getExpensesByCategory(categoryId);
+      for (const expense of expenses) {
+        await db.deleteExpense(expense.id);
+      }
 
       // Then delete the category
-      const { error } = await supabase
-        .from('budget_categories')
-        .delete()
-        .eq('id', categoryId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      await db.deleteBudgetCategory(categoryId);
 
       const updatedCategories = categories.filter(cat => cat.id !== categoryId);
       setCategories(updatedCategories);
