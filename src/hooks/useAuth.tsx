@@ -1,6 +1,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { db } from '@/lib/database';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,21 +23,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener using the database service
-    const { data: { subscription } } = db.onAuthStateChange((user) => {
-      setUser(user);
-      setSession(user ? { user } as Session : null);
-      setLoading(false);
-    });
+    // Set up auth state listener using Supabase directly
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
 
     // Get initial session
-    db.getCurrentUser().then((user) => {
-      setUser(user);
-      setSession(user ? { user } as Session : null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.data.subscription.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string) => {
