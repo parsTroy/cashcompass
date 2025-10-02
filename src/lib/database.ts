@@ -3,7 +3,6 @@ import type { User } from '@supabase/supabase-js'
 
 export class DatabaseService {
   private static instance: DatabaseService
-  private currentUser: User | null = null
 
   private constructor() {}
 
@@ -28,37 +27,32 @@ export class DatabaseService {
       email,
       password,
     })
-    if (data.user) {
-      this.currentUser = data.user
-    }
     return { data, error }
   }
 
   async signOut() {
     const { error } = await supabase.auth.signOut()
-    this.currentUser = null
     return { error }
   }
 
   async getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser()
-    this.currentUser = user
     return user
   }
 
   async onAuthStateChange(callback: (user: User | null) => void) {
     return supabase.auth.onAuthStateChange((event, session) => {
-      this.currentUser = session?.user ?? null
-      callback(this.currentUser)
+      callback(session?.user ?? null)
     })
   }
 
   // Database methods using Supabase client
   private async ensureUser() {
-    if (!this.currentUser) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       throw new Error('User must be authenticated to perform database operations')
     }
-    return this.currentUser
+    return user
   }
 
   // Profile operations
